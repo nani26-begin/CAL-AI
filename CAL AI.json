@@ -1,0 +1,191 @@
+{
+  "name": "CAL AI",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "3942438e-d0a1-4ed9-ab51-1554cb8fb6ea",
+      "name": "Telegram Trigger",
+      "webhookId": "5a85d8f5-1fc1-4385-8676-52bc15cdfe68",
+      "credentials": {
+        "telegramApi": {
+          "id": "7AYLLn1y1hfKBYfc",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Please analyze the uploaded food image and give me a detailed report. First, identify the dish and describe it briefly, including the main visible ingredients. Then provide an estimated nutritional breakdown per serving, including calories, protein, carbohydrates, fats, and any notable micronutrients such as vitamins, minerals, fiber, or sodium. After that, assign a health rating on a scale of 0 to 5, where 5 is highly preferable and 0 is not recommended, and explain the reason for this score. Next, evaluate the suitability of this dish for different groups of people: overweight or obese individuals, underweight individuals, people with diabetes, people with hypertension or heart disease, and athletes or very active people, stating whether the dish is preferable or not and why. Finally, suggest alternative food options, giving at least one vegetarian and one non-vegetarian option that may be healthier while explaining why they are good alternatives. and also tell who people an eat and who people cannot eat this food and also tell the calaris in the image ",
+        "hasOutputParser": true,
+        "options": {
+          "passthroughBinaryImages": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        832,
+        0
+      ],
+      "id": "e8e608e0-607f-4ee5-bcfb-9e6128dc64c7",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        704,
+        208
+      ],
+      "id": "d5ebc37d-e10f-4be8-9fa2-d103fbb45acd",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "UvOCbx2XGkFyFN4f",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n\"dish_identification\": {\n\"name\": \"Cheeseburger\",\n\"main_visible_ingredients\": [\n\"beef patty\",\n\"cheese\",\n\"bun\",\n\"lettuce\",\n\"tomato\",\n\"mayonnaise\"\n]\n},\n\"nutritional_breakdown\": {\n\"calories_kcal\": 850,\n\"protein_g\": 35,\n\"carbohydrates_g\": 55,\n\"fat_g\": 48,\n\"notable_micronutrients\": [\n\"Vitamin B12\",\n\"Iron\",\n\"Calcium\",\n\"Sodium\",\n\"Dietary fiber\"\n]\n},\n\"health_rating\": {\n\"score\": 2,\n\"reason\": \"High in saturated fat, sodium, and calories, making it less suitable for frequent consumption, though it provides good protein and iron.\"\n},\n\"suitability\": {\n\"overweight_obese\": \"Not preferable due to high calorie and fat content.\",\n\"underweight\": \"Preferable as it is calorie-dense and protein-rich.\",\n\"diabetes\": \"Not preferable because of refined carbs and high sodium.\",\n\"hypertension_heart_disease\": \"Not preferable due to sodium and saturated fats.\",\n\"athletes_active\": \"Moderately preferable for protein, but better consumed with healthier sides.\"\n},\n\"alternative_food_suggestions\": {\n\"vegetarian\": [\n\"Grilled veggie wrap with hummus and whole grain tortilla for lower fat and higher fiber.\"\n],\n\"non_vegetarian\": [\n\"Grilled chicken sandwich on whole wheat bun with vegetables for lean protein and lower fat.\"\n]\n}\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1008,
+        208
+      ],
+      "id": "2054661d-6094-4d79-b335-24f45159aec9",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=🍽️ Your food photo has been analyzed! 🤖📸\n\ndish_identification:{{ $json.output.dish_identification.name }}\n{{ $json.output.dish_identification.main_visible_ingredients }}\n\ncalories_kcal:\n{{ $json.output.nutritional_breakdown.calories_kcal }} 🔥\n\nprotein_g:\n{{ $json.output.nutritional_breakdown.protein_g }}g 💪\n\ncarbohydrates_g:\n{{ $json.output.nutritional_breakdown.carbohydrates_g }} g 🥖\n\nnotable_micronutrients:\n\n{{ $json.output.nutritional_breakdown.notable_micronutrients[0] }} 🧂\n\n{{ $json.output.nutritional_breakdown.notable_micronutrients[1] }}🩸\n\n{{ $json.output.nutritional_breakdown.notable_micronutrients[2] }}🍌\n\n{{ $json.output.nutritional_breakdown.notable_micronutrients[3] }}🥗\n\nhealth_rating:\n⭐ Score: {{ $json.output.health_rating.score }}/ 5\n🩺 Reason: {{ $json.output.health_rating.reason }}\n\nsuitability:\n\nOverweight/Obese: {{ $json.output.suitability.overweight_obese }}\n\nUnderweight: {{ $json.output.suitability.underweight }}\n\nDiabetes: 🚫 {{ $json.output.suitability.diabetes }}\n\nHypertension/Heart Disease: ❌ {{ $json.output.suitability.hypertension_heart_disease }}\nAthletes/Active: ⚠️ {{ $json.output.suitability.athletes_active }}\nalternative_food_suggestions:\n🌱 Vegetarian:{{ $json.output.alternative_food_suggestions.vegetarian[0] }} \n🍗 Non-Vegetarian: {{ $json.output.alternative_food_suggestions.non_vegetarian[0] }}\nTHANK YOU {{ $('Telegram Trigger').item.json.message.from.first_name }}\n\nTHIS WAS ANALYSIS BY THE AJIT ",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1184,
+        0
+      ],
+      "id": "17d23039-37ab-4a68-b6bc-21c00414d12a",
+      "name": "Send a text message",
+      "webhookId": "fac3847b-3311-4ead-841d-cf3d1178cef9",
+      "credentials": {
+        "telegramApi": {
+          "id": "7AYLLn1y1hfKBYfc",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.photo[1].file_id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "a5656e52-73c6-41af-805f-90ccf0b5452f",
+      "name": "Get a file",
+      "webhookId": "1c7719eb-96a3-4936-bce5-215e0743592d",
+      "credentials": {
+        "telegramApi": {
+          "id": "7AYLLn1y1hfKBYfc",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get a file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a file": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "69d5f7fb-03bf-48f3-9bcc-4aa9537f082c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7326a082a92d91af3e3c6549123f27ad9a6837b986581734b8d3c8917e264ebd"
+  },
+  "id": "JOUfGS9VNjw2ctvn",
+  "tags": []
+}
